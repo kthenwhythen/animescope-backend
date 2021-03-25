@@ -105,26 +105,26 @@ class UsersResource(Resource):
 class PredictionResource(Resource):
     def get(self, id):
         abort_if_prediction_doesnt_exist(id)
-        user = Users.objects(username=username).first()
-        return {"id": str(user.id), 
-                "username": user.username, 
-                "name": user.name, 
-                "zodiac": user.zodiac,
-                "predictions": user.predictions}
+        prediction = Predictions.objects(id=id).first()
+        return {"id": str(prediction.id), 
+                "img": prediction.img, 
+                "text": prediction.text, 
+                "source": prediction.source}
 
     def put(self, id):
         abort_if_prediction_doesnt_exist(id)
         args = parser.parse_args()
-        user = Users.objects(username=username).first()
-        user.name = args['name']
-        user.zodiac = args['zodiac']
-        user.save()
-        return f"User: '{username}' was changed"
+        prediction = Predictions.objects(id=id).first()
+        prediction.img = args['img']
+        prediction.text = args['text']
+        prediction.source = args['source']
+        prediction.save()
+        return f"Prediction: '{id}' was changed"
 
     def delete(self, id):
         abort_if_prediction_doesnt_exist(id)
-        Users.objects(username=username).first().delete()
-        return f"User: '{username}' was deleted", 204
+        Predictions.objects(id=id).first().delete()
+        return f"Prediction: '{id}' was deleted", 204
 
 
 class PredictionsResource(Resource):
