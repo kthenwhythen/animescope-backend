@@ -66,12 +66,14 @@ class UserResource(Resource):
         abort_if_user_doesnt_exist(username)
         args = parser.parse_args()
         user = Users.objects(username=username).first()
+        user.name = args["name"]
+        user.zodiac = args["zodiac"]
+        
         try:
-            user.name = args["name"]
-            user.zodiac = args["zodiac"]
+            user.save()
         except ValidationError as error:
             return error.message
-        user.save()
+            
         return f"User: '{username}' was changed"
 
     def delete(self, username):
@@ -92,16 +94,22 @@ class UsersResource(Resource):
     def post(self):
         args = parser.parse_args()
         new_user = Users()
-        try:
-            new_user.username = args["username"]
+        new_user.username = args["username"]
+
+        password = args["password"]
+        if password:
             new_user.password = generate_password_hash(args["password"], method="pbkdf2:sha256", salt_length=8)
-            new_user.name = args["name"]
-            new_user.zodiac = args["zodiac"]
-        except ValidationError as error:
+        else:
+            abort(404, message=f"Password can't be null")
+
+        new_user.name = args["name"]
+        new_user.zodiac = args["zodiac"]
+
+        try:
+            new_user.save()
+        except (ValidationError, NotUniqueError) as error:
             return error.message
-        except NotUniqueError as error:
-            return "Not unique username"
-        new_user.save()
+
         return f"User: '{new_user.username}' was created"
 
 
@@ -119,13 +127,15 @@ class PredictionResource(Resource):
         abort_if_prediction_doesnt_exist(id)
         args = parser.parse_args()
         prediction = Predictions.objects(id=id).first()
+        prediction.img = args["img"]
+        prediction.text = args["text"]
+        prediction.source = args["source"]
+
         try:
-            prediction.img = args["img"]
-            prediction.text = args["text"]
-            prediction.source = args["source"]
+            prediction.save()
         except ValidationError as error:
             return error.message
-        prediction.save()
+        
         return f"Prediction: '{id}' was changed"
 
     def delete(self, id):
@@ -145,13 +155,15 @@ class PredictionsResource(Resource):
     def post(self):
         args = parser.parse_args()
         new_prediction = Predictions()
+        new_prediction.img = args["img"]
+        new_prediction.text = args["text"]
+        new_prediction.source = args["source"]
+
         try:
-            new_prediction.img = args["img"]
-            new_prediction.text = args["text"]
-            new_prediction.source = args["source"]
+            new_prediction.save()
         except ValidationError as error:
             return error.message
-        new_prediction.save()
+        
         return f"Prediction was created"
 
 
