@@ -2,6 +2,7 @@ from flask import Blueprint
 from flask_restful import Resource, abort, reqparse
 from flask_login import logout_user, login_required
 from mongoengine import ValidationError, NotUniqueError
+from werkzeug.security import generate_password_hash
 
 from .extensions import api, login_manager
 from .models import Users, Predictions
@@ -21,10 +22,10 @@ def abort_if_prediction_doesnt_exist(id):
 
 
 parser = reqparse.RequestParser()
-parser.add_argument('username')
-parser.add_argument('password')
-parser.add_argument('name')
-parser.add_argument('zodiac')
+parser.add_argument("username")
+parser.add_argument("password")
+parser.add_argument("name")
+parser.add_argument("zodiac")
 
 # @login_manager.user_loader
 # def load_user(username):
@@ -65,8 +66,11 @@ class UserResource(Resource):
         abort_if_user_doesnt_exist(username)
         args = parser.parse_args()
         user = Users.objects(username=username).first()
-        user.name = args['name']
-        user.zodiac = args['zodiac']
+        try:
+            user.name = args["name"]
+            user.zodiac = args["zodiac"]
+        except ValidationError as error:
+            return error.message
         user.save()
         return f"User: '{username}' was changed"
 
@@ -86,18 +90,18 @@ class UsersResource(Resource):
         return users
 
     def post(self):
+        args = parser.parse_args()
+        new_user = Users()
         try:
-            args = parser.parse_args()
-            new_user = Users()
-            new_user.username = args['username']
-            new_user.password = args['password']
-            new_user.name = args['name']
-            new_user.zodiac = args['zodiac']
-            new_user.save()
+            new_user.username = args["username"]
+            new_user.password = generate_password_hash(args["password"], method="pbkdf2:sha256", salt_length=8)
+            new_user.name = args["name"]
+            new_user.zodiac = args["zodiac"]
         except ValidationError as error:
             return error.message
         except NotUniqueError as error:
             return "Not unique username"
+        new_user.save()
         return f"User: '{new_user.username}' was created"
 
 
@@ -115,9 +119,12 @@ class PredictionResource(Resource):
         abort_if_prediction_doesnt_exist(id)
         args = parser.parse_args()
         prediction = Predictions.objects(id=id).first()
-        prediction.img = args['img']
-        prediction.text = args['text']
-        prediction.source = args['source']
+        try:
+            prediction.img = args["img"]
+            prediction.text = args["text"]
+            prediction.source = args["source"]
+        except ValidationError as error:
+            return error.message
         prediction.save()
         return f"Prediction: '{id}' was changed"
 
@@ -136,15 +143,15 @@ class PredictionsResource(Resource):
         return predictions
 
     def post(self):
+        args = parser.parse_args()
+        new_prediction = Predictions()
         try:
-            args = parser.parse_args()
-            new_prediction = Predictions()
-            new_prediction.img = args['img']
-            new_prediction.text = args['text']
-            new_prediction.source = args['source']
-            new_prediction.save()
+            new_prediction.img = args["img"]
+            new_prediction.text = args["text"]
+            new_prediction.source = args["source"]
         except ValidationError as error:
             return error.message
+        new_prediction.save()
         return f"Prediction was created"
 
 

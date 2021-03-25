@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, DictField, URLField, 
+from mongoengine import Document, StringField, DictField, URLField
 
 
 class Users(Document):
