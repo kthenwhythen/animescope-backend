@@ -12,13 +12,13 @@ main = Blueprint("main", __name__)
 
 
 def abort_if_user_doesnt_exist(username):
-    if not Users.objects(username=username):
+    if not Users.objects(username=username).first():
         abort(404, message=f"User with username:'{username}' doesn't exist")
 
 
-def abort_if_prediction_doesnt_exist(id):
-    if not Predictions.objects(id=id):
-        abort(404, message=f"Prediction with id:'{id}' doesn't exist")
+def abort_if_prediction_doesnt_exist(prediction_id):
+    if not Predictions.objects(id=prediction_id).first():
+        abort(404, message=f"Prediction with id:'{prediction_id}' doesn't exist")
 
 
 parser = reqparse.RequestParser()
@@ -26,6 +26,9 @@ parser.add_argument("username")
 parser.add_argument("password")
 parser.add_argument("name")
 parser.add_argument("zodiac")
+parser.add_argument("img")
+parser.add_argument("text")
+parser.add_argument("source")
 
 # @login_manager.user_loader
 # def load_user(username):
@@ -68,7 +71,7 @@ class UserResource(Resource):
         user = Users.objects(username=username).first()
         user.name = args["name"]
         user.zodiac = args["zodiac"]
-        
+
         try:
             user.save()
         except ValidationError as error:
@@ -79,7 +82,7 @@ class UserResource(Resource):
     def delete(self, username):
         abort_if_user_doesnt_exist(username)
         Users.objects(username=username).first().delete()
-        return f"User: '{username}' was deleted", 204
+        return f"User: '{username}' was deleted"
 
 
 class UsersResource(Resource):
@@ -94,7 +97,7 @@ class UsersResource(Resource):
     def post(self):
         args = parser.parse_args()
         new_user = Users()
-        new_user.username = args["username"]
+        new_user.username = args["username"].lower()
 
         password = args["password"]
         if password:
@@ -107,26 +110,28 @@ class UsersResource(Resource):
 
         try:
             new_user.save()
-        except (ValidationError, NotUniqueError) as error:
+        except ValidationError as error:
             return error.message
+        except NotUniqueError as error:
+            return "username not unique"
 
         return f"User: '{new_user.username}' was created"
 
 
 # @login_required
 class PredictionResource(Resource):
-    def get(self, id):
-        abort_if_prediction_doesnt_exist(id)
-        prediction = Predictions.objects(id=id).first()
+    def get(self, prediction_id):
+        abort_if_prediction_doesnt_exist(prediction_id)
+        prediction = Predictions.objects.get(id=prediction_id)
         return {"id": str(prediction.id), 
                 "img": prediction.img, 
                 "text": prediction.text, 
                 "source": prediction.source}
 
-    def put(self, id):
-        abort_if_prediction_doesnt_exist(id)
+    def put(self, prediction_id):
+        abort_if_prediction_doesnt_exist(prediction_id)
         args = parser.parse_args()
-        prediction = Predictions.objects(id=id).first()
+        prediction = Predictions.objects.get(id=prediction_id)
         prediction.img = args["img"]
         prediction.text = args["text"]
         prediction.source = args["source"]
@@ -136,12 +141,12 @@ class PredictionResource(Resource):
         except ValidationError as error:
             return error.message
         
-        return f"Prediction: '{id}' was changed"
+        return f"Prediction: '{prediction_id}' was changed"
 
-    def delete(self, id):
-        abort_if_prediction_doesnt_exist(id)
-        Predictions.objects(id=id).first().delete()
-        return f"Prediction: '{id}' was deleted", 204
+    def delete(self, prediction_id):
+        abort_if_prediction_doesnt_exist(prediction_id)
+        Predictions.objects.get(id=prediction_id).delete()
+        return f"Prediction: '{prediction_id}' was deleted"
 
 
 class PredictionsResource(Resource):
