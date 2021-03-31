@@ -1,1 +1,1 @@
-web: gunicorn "animescope:app"
+web: gunicorn "app:create_app()"
