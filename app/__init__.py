@@ -8,7 +8,7 @@ from .main import main
 
 def create_app():
     app = Flask(__name__)
-
+    app.testing = True
     app.config['MONGODB_SETTINGS'] = {
         'db': 'animescope',
         'host': os.environ.get("MONGO_ANIMESCOPE"),
