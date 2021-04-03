@@ -169,7 +169,7 @@ class PredictionsResource(Resource):
         except ValidationError as error:
             return error.message
         
-        return redirect("https://animescope.herokuapp.com/", 201)
+        return redirect("https://animescope.herokuapp.com/")
 
 
 api.add_resource(UserResource, "/user/<string:username>")
