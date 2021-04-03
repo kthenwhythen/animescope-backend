@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, redirect
 from flask_restful import Resource, abort, reqparse
 from flask_login import logout_user, login_required
 from mongoengine import ValidationError, NotUniqueError
@@ -169,7 +169,7 @@ class PredictionsResource(Resource):
         except ValidationError as error:
             return error.message
         
-        return f"Prediction was created", 201
+        return redirect("/", 201)
 
 
 api.add_resource(UserResource, "/user/<string:username>")
