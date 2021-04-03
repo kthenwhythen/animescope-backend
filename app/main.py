@@ -169,7 +169,7 @@ class PredictionsResource(Resource):
         except ValidationError as error:
             return error.message
         
-        return f"Prediction was created"
+        return f"Prediction was created", 201
 
 
 api.add_resource(UserResource, "/user/<string:username>")
