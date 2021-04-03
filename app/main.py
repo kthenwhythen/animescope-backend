@@ -167,7 +167,7 @@ class PredictionsResource(Resource):
         try:
             new_prediction.save()
         except ValidationError as error:
-            return error.message
+            return error.message, 400
         
         return "fine", 201
 
